@@ -267,6 +267,70 @@ def get_user_info(user_id: int) -> dict:
     }
 ```
 
+### Example 4: Weather Information (with API Integration)
+
+```python
+import requests
+from typing import Dict, Any
+
+@mcp.tool(name="get_weather", description="获取指定城市的天气信息，支持中文和英文城市名")
+def get_weather(city: str, lang: str = "zh") -> Dict[str, Any]:
+    """
+    获取指定城市的天气信息
+    
+    Args:
+        city: 城市名称，例如 "北京", "Shanghai", "New York"
+        lang: 语言设置，默认为 "zh" (中文)，可选 "en" (英文)
+    
+    Returns:
+        包含天气信息的字典，包括温度、天气状况、湿度、风速等
+    """
+    try:
+        format_str = "%C+%t+%h+%w+%l"
+        url = f"https://wttr.in/{city}?format={format_str}&lang={lang}"
+        
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        
+        data = response.text.strip().split()
+        
+        if len(data) >= 4:
+            return {
+                "success": True,
+                "city": city,
+                "condition": data[0],      # 天气状况
+                "temperature": data[1],    # 温度
+                "humidity": data[2],       # 湿度
+                "wind_speed": data[3],     # 风速
+                "location": " ".join(data[4:]) if len(data) > 4 else city,
+                "raw_data": response.text.strip()
+            }
+        else:
+            return {
+                "success": False,
+                "city": city,
+                "error": "无法解析天气数据"
+            }
+            
+    except Exception as e:
+        return {
+            "success": False,
+            "city": city,
+            "error": f"发生错误: {str(e)}"
+        }
+```
+
+**Usage:**
+```python
+# 查询北京天气（中文）
+result = get_weather("北京")
+# 返回: {"success": True, "city": "北京", "condition": "晴", "temperature": "+15°C", ...}
+
+# 查询纽约天气（英文）
+result = get_weather("New York", lang="en")
+# 返回: {"success": True, "city": "New York", "condition": "Clear", "temperature": "+59°F", ...}
+```
+
 ## Contributing
 
 We welcome contributions! Please follow these guidelines:
