@@ -1,20 +1,64 @@
-__pycache__
-*.pyc
-*.pyo
-*.pyd
-.Python
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
 *.so
+.Python
 *.egg
-*.egg-info
-dist
-build
-.git
-.gitignore
-.env
-.venv
+*.egg-info/
+dist/
+build/
+eggs/
+.eggs/
+*.manifest
+*.spec
+
+# Virtual environments
+.venv/
 venv/
 ENV/
-.idea
-.vscode
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Docker
+docker/
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Logs
+logs/
 *.log
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Testing
+playground/
+tests/
+*.test.py
+pytest.ini
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Documentation
+*.md
+docs/
+
+# Misc
+.env
+.env.*
+*.bak
+*.tmp

@@ -4,11 +4,7 @@
 
 <h4>Transform Your APIs into MCP Tools Effortlessly</h4>
 
-**English** | [简体中文](README-CN.md)
 
-<a href="https://github.com/yourusername/API2MCP">
-  <img alt="GitHub version" src="https://img.shields.io/badge/version-0.0.1-blue.svg?style=for-the-badge" />
-</a>
 <a href="LICENSE">
   <img alt="License MIT" src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" />
 </a>
@@ -18,22 +14,13 @@
 API2MCP is a lightweight framework that enables you to quickly build MCP (Model Context Protocol) servers. Transform your existing APIs into AI-accessible tools with minimal code.
 
 ## Table of Contents
-- [Table of Contents](#table-of-contents)
 - [Why API2MCP?](#why-api2mcp)
-  - [Core Features](#core-features)
-  - [Key Capabilities](#key-capabilities)
 - [Technology Stack](#technology-stack)
 - [Quick Start](#quick-start)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Development](#development)
 - [Project Structure](#project-structure)
-- [Usage](#usage)
-  - [Creating MCP Tools](#creating-mcp-tools)
-  - [Running the Server](#running-the-server)
-  - [Docker Deployment](#docker-deployment)
+- [Docker Deployment](#docker-deployment)
 - [Configuration](#configuration)
-- [Examples](#examples)
+- [Testing](#testing)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -58,23 +45,16 @@ API2MCP bridges the gap between traditional APIs and AI systems by exposing your
 **🐳 Production Ready**
 - Docker support out of the box
 - Docker Compose for easy deployment
-- Configurable host and port settings
-- Health checks and monitoring support
-
-### Key Capabilities
-
-- **Declarative API**: Define tools with simple decorators
-- **Type Safety**: Automatic parameter validation using Python type hints
-- **Hot Reload**: Development mode with automatic reloading
-- **Scalable**: Asynchronous execution with SSE transport
-- **Extensible**: Easy to add new tools and integrate with existing systems
+- Health checks and monitoring
+- Structured logging with Loguru
 
 ## Technology Stack
 
 **Backend:**
 - **[FastMCP](https://github.com/jlowin/fastmcp)**: High-performance MCP server framework
 - **Python 3.11+**: Modern Python with type hints
-- **SSE Transport**: Server-Sent Events for real-time communication
+- **Pydantic**: Data validation and settings management
+- **Loguru**: Beautiful logging
 
 **DevOps:**
 - **Docker**: Containerized deployment
@@ -99,236 +79,215 @@ cd API2MCP
 pip install -r requirements.txt
 ```
 
-### Development
-
-**Run the MCP Server Locally:**
+### Run the Server
 
 ```bash
-python src/main.py
+# Using Python directly
+python -m src.api.main
+
+# Or using Make
+make dev
 ```
 
-The server will start on `http://0.0.0.0:8400` with SSE transport enabled.
+The server will start on `http://0.0.0.0:9090` with SSE transport enabled.
 
-**Test the Tools:**
+### Test the Connection
 
-Once running, your MCP tools will be available for AI assistants to discover and use. The current demo includes:
-- `add`: Add two numbers together
-- `multiply`: Multiply two numbers
+```bash
+# Simple connection test
+python playground/test_mcp_simple.py
+
+# Full test with LangChain
+python playground/test_mcp_client.py
+```
 
 ## Project Structure
 
 ```
 API2MCP/
 ├── src/
-│   └── main.py              # MCP server entry point
+│   ├── __init__.py
+│   ├── api/
+│   │   ├── __init__.py
+│   │   └── main.py              # MCP Server & tool definitions
+│   ├── repository/
+│   │   ├── __init__.py
+│   │   └── constants.py         # Constants & mappings
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── data_service.py      # HTTP request utilities
+│   │   ├── device_service.py    # Device data processing
+│   │   ├── environment_service.py
+│   │   ├── message_service.py
+│   │   └── weather_service.py   # Weather data processing
+│   └── utils/
+│       ├── __init__.py
+│       ├── config.py            # Configuration (Pydantic)
+│       └── logger.py            # Logging (Loguru)
 ├── docker/
-│   ├── Dockerfile           # Docker image definition
-│   └── docker-compose.yml   # Docker Compose configuration
-├── requirements.txt         # Python dependencies
-├── .gitignore              # Git ignore rules
-└── README.md               # This file
+│   ├── Dockerfile
+│   ├── docker-compose.yml
+│   └── .dockerignore
+├── playground/
+│   ├── test.http                # HTTP test file
+│   ├── test_mcp_simple.py       # Simple connection test
+│   └── test_mcp_client.py       # LangChain MCP client test
+├── Makefile                     # Common commands
+├── requirements.txt
+└── README.md
 ```
 
-## Usage
+## Docker Deployment
 
-### Creating MCP Tools
-
-Define your tools using the `@mcp.tool()` decorator:
-
-```python
-from mcp.server.fastmcp import FastMCP
-
-mcp = FastMCP(name="MyServer", port=8400, host="0.0.0.0")
-
-@mcp.tool(name="my_tool", description="Description of what this tool does")
-def my_tool(param1: str, param2: int) -> dict:
-    """
-    Your tool implementation here
-    """
-    return {"result": f"Processed {param1} with {param2}"}
-```
-
-**Best Practices:**
-- Use clear, descriptive names for your tools
-- Provide detailed descriptions for AI understanding
-- Use Python type hints for automatic validation
-- Return structured data (dict, list, etc.) when possible
-
-### Running the Server
-
-**Local Development:**
-
-```python
-if __name__ == "__main__":
-    mcp.run(transport="sse")
-```
-
-**Configuration Options:**
-
-```python
-mcp = FastMCP(
-    name="MyServer",      # Server name
-    port=8400,            # Port number
-    host="0.0.0.0"        # Host address (0.0.0.0 for all interfaces)
-)
-```
-
-### Docker Deployment
-
-**Build and Run with Docker:**
+### Using Docker Compose (Recommended)
 
 ```bash
-# Build the image
-docker build -f docker/Dockerfile -t api2mcp .
+# Build and start the service
+make build
+make run
 
-# Run the container
-docker run -p 8400:8400 api2mcp
-```
-
-**Using Docker Compose:**
-
-```bash
-# Start the service
+# Or directly with docker-compose
 docker-compose -f docker/docker-compose.yml up -d
 
 # View logs
-docker-compose -f docker/docker-compose.yml logs -f
+make logs
 
 # Stop the service
-docker-compose -f docker/docker-compose.yml down
+make stop
 ```
 
-The Docker Compose setup includes:
+### Using Docker Directly
+
+```bash
+# Build the image
+docker build -f docker/Dockerfile -t api2mcp-server .
+
+# Run the container
+docker run -d \
+  --name api2mcp-server \
+  -p 9090:9090 \
+  api2mcp-server
+```
+
+### Docker Configuration
+
+The Docker setup includes:
+- Health checks (every 30s)
 - Automatic restarts (`unless-stopped`)
-- Port mapping (8400:8400)
-- Linux/AMD64 platform support
+- Log rotation (10MB max, 3 files)
+- Volume mounting for logs persistence
 
 ## Configuration
 
-**Environment Variables:**
+### Default Values (Hardcoded)
 
-You can customize the server behavior using environment variables:
+Configuration is managed in `src/utils/config.py` using Pydantic:
+
+```python
+class DataServiceConfig(BaseModel):
+    # MCP Server
+    mcp_host: str = "0.0.0.0"
+    mcp_port: int = 9090
+    
+    # Data Service
+    base_url: str = "http://25.91.83.60:18081"
+    timeout: float = 10.0
+    outage_token: str = "your-token"
+    
+    # Landform Service
+    landform_url: str = "http://192.168.11.145:38000"
+```
+
+### Environment Variables (Docker)
+
+You can override settings via environment variables in `docker-compose.yml`:
+
+```yaml
+environment:
+  - MCP_HOST=0.0.0.0
+  - MCP_PORT=9090
+  - DATA_SERVICE_BASE_URL=http://your-service:8080
+  - DATA_SERVICE_TIMEOUT=15
+```
+
+## Testing
+
+### HTTP Testing (VS Code REST Client)
+
+Use the `playground/test.http` file with VS Code REST Client extension:
+
+```http
+### SSE Connection Test
+GET http://localhost:9090/sse
+Accept: text/event-stream
+
+### List Available Tools
+POST http://localhost:9090/mcp
+Content-Type: application/json
+
+{
+  "jsonrpc": "2.0",
+  "method": "tools/list",
+  "id": 1
+}
+```
+
+### Python Testing
 
 ```bash
-# Server configuration
-MCP_SERVER_NAME=MyServer
-MCP_SERVER_PORT=8400
-MCP_SERVER_HOST=0.0.0.0
+# Simple SSE connection test
+python playground/test_mcp_simple.py
 
-# Transport settings
-MCP_TRANSPORT=sse
+# Full test with LangChain MCP adapters
+python playground/test_mcp_client.py
 ```
 
-**In Code:**
+### LangChain Integration
 
 ```python
-import os
+from langchain_mcp_adapters.client import MultiServerMCPClient
 
-mcp = FastMCP(
-    name=os.getenv("MCP_SERVER_NAME", "Demo"),
-    port=int(os.getenv("MCP_SERVER_PORT", 8400)),
-    host=os.getenv("MCP_SERVER_HOST", "0.0.0.0")
-)
-```
-
-## Examples
-
-### Example 1: Math Operations
-
-```python
-@mcp.tool(name="add", description="Add two numbers")
-def add(a: int, b: int) -> int:
-    return a + b
-
-@mcp.tool(name="multiply", description="Multiply two numbers")
-def multiply(a: int, b: int) -> int:
-    return a * b
-```
-
-### Example 2: String Processing
-
-```python
-@mcp.tool(name="format_text", description="Format text with various options")
-def format_text(text: str, uppercase: bool = False, trim: bool = True) -> str:
-    result = text.strip() if trim else text
-    return result.upper() if uppercase else result
-```
-
-### Example 3: Data Retrieval
-
-```python
-@mcp.tool(name="get_user_info", description="Retrieve user information")
-def get_user_info(user_id: int) -> dict:
-    # Your logic here
-    return {
-        "user_id": user_id,
-        "name": "John Doe",
-        "email": "john@example.com"
+client = MultiServerMCPClient({
+    "outage_mcp": {
+        "url": "http://localhost:9090/sse",
+        "transport": "sse",
     }
+})
+
+tools = await client.get_tools()
+print(f"Found {len(tools)} tools")
 ```
 
-### Example 4: Weather Information (with API Integration)
+## Available Tools
 
-```python
-import requests
-from typing import Dict, Any
+| Tool | Description |
+|------|-------------|
+| `get_event_data` | 获取停电事件基本信息 |
+| `get_weather_data` | 获取停电时间沿线天气分析数据 |
+| `weather_data_processing` | 处理并总结天气数据 |
+| `work_order_query_tool` | 沿线诉求工单查询 |
+| `get_environment_raw_data` | 获取原始环境数据 |
+| `environment_data_processing` | 处理总结环境信息 |
+| `get_drone_analysis` | 获取无人机图片分析结果 |
+| `get_message_data` | 获取保护报文数据 |
+| `get_wave_data` | 获取录波数据 |
+| `message_data_processing` | 处理报文、录波数据 |
+| `get_device_info_data` | 获取设备信息数据 |
+| `process_device_info_data` | 处理设备信息数据 |
 
-@mcp.tool(name="get_weather", description="获取指定城市的天气信息，支持中文和英文城市名")
-def get_weather(city: str, lang: str = "zh") -> Dict[str, Any]:
-    """
-    获取指定城市的天气信息
-    
-    Args:
-        city: 城市名称，例如 "北京", "Shanghai", "New York"
-        lang: 语言设置，默认为 "zh" (中文)，可选 "en" (英文)
-    
-    Returns:
-        包含天气信息的字典，包括温度、天气状况、湿度、风速等
-    """
-    try:
-        format_str = "%C+%t+%h+%w+%l"
-        url = f"https://wttr.in/{city}?format={format_str}&lang={lang}"
-        
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-        
-        data = response.text.strip().split()
-        
-        if len(data) >= 4:
-            return {
-                "success": True,
-                "city": city,
-                "condition": data[0],      # 天气状况
-                "temperature": data[1],    # 温度
-                "humidity": data[2],       # 湿度
-                "wind_speed": data[3],     # 风速
-                "location": " ".join(data[4:]) if len(data) > 4 else city,
-                "raw_data": response.text.strip()
-            }
-        else:
-            return {
-                "success": False,
-                "city": city,
-                "error": "无法解析天气数据"
-            }
-            
-    except Exception as e:
-        return {
-            "success": False,
-            "city": city,
-            "error": f"发生错误: {str(e)}"
-        }
-```
+## Make Commands
 
-**Usage:**
-```python
-# 查询北京天气（中文）
-result = get_weather("北京")
-# 返回: {"success": True, "city": "北京", "condition": "晴", "temperature": "+15°C", ...}
-
-# 查询纽约天气（英文）
-result = get_weather("New York", lang="en")
-# 返回: {"success": True, "city": "New York", "condition": "Clear", "temperature": "+59°F", ...}
+```bash
+make help      # Show available commands
+make build     # Build Docker image
+make run       # Start service (background)
+make stop      # Stop service
+make logs      # View logs
+make clean     # Clean Docker resources
+make dev       # Run in development mode
+make test      # Run tests
+make install   # Install dependencies
+make restart   # Restart service
 ```
 
 ## Contributing
@@ -344,12 +303,6 @@ We welcome contributions! Please follow these guidelines:
 4. **Test** your changes thoroughly
 5. **Commit** with conventional commits (`feat:`, `fix:`, `docs:`, etc.)
 6. **Push** and open a Pull Request
-
-**Development Tips:**
-- Test your tools with an MCP client before committing
-- Use meaningful tool names and descriptions
-- Document any new configuration options
-- Update the README with new examples
 
 ## License
 

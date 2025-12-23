@@ -1,2 +1,11 @@
+# MCP Server
 fastmcp
 requests
+loguru
+pydantic>=2.0
+
+# Testing
+httpx
+langchain-mcp-adapters
+langchain-openai
+langgraph

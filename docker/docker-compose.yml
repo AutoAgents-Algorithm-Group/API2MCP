@@ -5,11 +5,35 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-      platforms:
-        - linux/amd64
-    platform: linux/amd64
-    container_name: mcp-server
+    image: api2mcp-server:latest
+    container_name: api2mcp-server
     ports:
-      - "8400:8400"
+      - "${MCP_PORT:-9090}:9090"
+    environment:
+      # MCP 服务器配置（可选，有默认值）
+      - MCP_HOST=0.0.0.0
+      - MCP_PORT=9090
+      # 数据服务配置（可选，有默认值）
+      # - DATA_SERVICE_BASE_URL=http://25.91.83.60:18081
+      # - DATA_SERVICE_TIMEOUT=10
+    volumes:
+      # 日志持久化
+      - ./logs:/app/logs
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/sse"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - mcp-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
+networks:
+  mcp-network:
+    driver: bridge
